@@ -55,37 +55,99 @@ Input PDFs → input/
 
 Input JSON → data/challenge1b_input.json
 
-Run pipeline
+## 🐳 Docker Instructions
 
-bash
-Copy
-Edit
-python main.py data/challenge1b_input.json
-Output
+### 📦 Build the Docker Image
 
-Saved to output/challenge1b_output.json
+```bash
+docker build --platform linux/amd64 -t persona-extractor:v1 .
+```
 
-🔒 Offline Guarantee
-All model artifacts (MPNet-ONNX) are automatically cached and reused. No internet access is required after the first setup.
+### 🚀 Run the Container
 
-📋 Constraints Satisfied
-Requirement	Status
-CPU-only	✅
-Offline-only (no API calls)	✅
-Model size < 1GB	✅ (~420MB)
-No hardcoded rule exceptions	✅
-Domain-agnostic	✅
-Robust to changing inputs	✅
+```bash
+docker run --rm \
+  -v $(pwd)/input:/app/input \
+  -v $(pwd)/output:/app/output \
+  --network none \
+  persona-extractor:v1
+```
 
-✨ Example Prompt Format
-json
-Copy
-Edit
+---
+
+## 🔍 Expected Input
+
+- A folder of PDFs (`input/`)
+- A `persona` string + `job-to-be-done` string (read from JSON or hardcoded, depending on design)
+- Offline MiniLM & MPNet models located in `models/` subfolders
+
+---
+
+## 📤 Output Format
+
+```json
 {
-  "persona": { "role": "Chef" },
-  "job_to_be_done": { "task": "List only dinner options from the PDFs" },
-  "documents": [
-    { "filename": "Dinner Ideas - Mains_1.pdf", "title": "Dinner Ideas - Mains_1" },
-    ...
+  "metadata": {
+    "documents": ["doc1.pdf", "doc2.pdf"],
+    "persona": "PhD Researcher in Computational Biology",
+    "job": "Prepare a literature review on GNNs for drug discovery",
+    "timestamp": "2025-07-29T23:58:00"
+  },
+  "sections": [
+    {
+      "document": "doc1.pdf",
+      "page": 2,
+      "section_title": "Methodology Overview",
+      "importance_rank": 1
+    }
+  ],
+  "subsections": [
+    {
+      "document": "doc1.pdf",
+      "page": 3,
+      "refined_text": "The GNN framework relies on graph convolution layers...",
+      "importance_rank": 1
+    }
   ]
 }
+```
+
+---
+
+## 📁 Model Notes
+
+- All transformer models are preloaded into `models/`:
+  - `models/minilm/`
+  - `models/mpnet/`
+- No external downloads or API requests are made inside the container.
+- Fully compliant with offline and size constraints.
+
+---
+
+## 🧠 How It Works
+
+1. **Persona + job strings** are converted to embedding vectors.
+2. Each section title from each PDF is compared against these vectors.
+3. Cosine similarity is used to rank sections by relevance.
+4. Subsections under top-ranked sections are summarized and scored.
+5. JSON output is created per the challenge specification.
+
+---
+
+## 📜 Multilingual Support ✅
+
+We use `paraphrase-multilingual-MiniLM-L12-v2` to handle non-English documents. This enhances semantic matching for global users.
+
+---
+
+## ❗ Constraints Handled
+
+| Constraint        | Status     |
+|-------------------|------------|
+| ⏱ ≤ 60 sec        | ✅ Optimized |
+| 📦 Model ≤ 1GB     | ✅ (~200MB x 2 models) |
+| 🖥 CPU-only        | ✅ Fully CPU compatible |
+| 🌐 No Internet     | ✅ Offline execution |
+| 🔤 Multilingual     | ✅ Supported |
+
+---
