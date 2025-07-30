@@ -134,12 +134,6 @@ docker run --rm \
 
 ---
 
-## 📜 Multilingual Support ✅
-
-We use `paraphrase-multilingual-MiniLM-L12-v2` to handle non-English documents. This enhances semantic matching for global users.
-
----
-
 ## ❗ Constraints Handled
 
 | Constraint        | Status     |
